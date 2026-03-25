@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User health data and goals",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "age": { "type": "number" },
+        "height": { "type": "number" },
+        "weight": { "type": "number" },
+        "allergies": { "type": "string" },
+        "healthIssues": { "type": "string" },
+        "goal": { "type": "string", "enum": ["weight_loss", "weight_gain"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "age", "height", "weight", "goal"]
+    },
+    "DietPlan": {
+      "title": "7-Day Diet Plan",
+      "description": "Generated meal plan for a user",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "plan": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "plan", "createdAt"]
+    },
+    "Feedback": {
+      "title": "Weekly Feedback",
+      "description": "User feedback on their diet plan",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "planId": { "type": "string" },
+        "rating": { "type": "number" },
+        "comments": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "planId", "rating"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "/dietPlans/{planId}": {
+      "schema": "DietPlan",
+      "description": "Generated diet plans"
+    },
+    "/feedback/{feedbackId}": {
+      "schema": "Feedback",
+      "description": "User feedback entries"
+    }
+  }
+}

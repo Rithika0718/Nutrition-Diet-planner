@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Fields: uid, age, height, weight, allergies, healthIssues, goal, createdAt
+    //
+    // Collection: dietPlans
+    // Fields: uid, plan, createdAt
+    //
+    // Collection: feedback
+    // Fields: uid, planId, rating, comments, createdAt
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'age', 'height', 'weight', 'goal']) &&
+             data.uid == request.auth.uid &&
+             data.age is number && data.age > 0 &&
+             data.height is number && data.height > 0 &&
+             data.weight is number && data.weight > 0 &&
+             data.goal in ['weight_loss', 'weight_gain'];
+    }
+
+    function isValidDietPlan(data) {
+      return data.keys().hasAll(['uid', 'plan', 'createdAt']) &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidFeedback(data) {
+      return data.keys().hasAll(['uid', 'planId', 'rating', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             data.rating is number && data.rating >= 1 && data.rating <= 5;
+    }
+
+    // Rules
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidUser(request.resource.data);
+    }
+
+    match /dietPlans/{planId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && isValidDietPlan(request.resource.data);
+    }
+
+    match /feedback/{feedbackId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && isValidFeedback(request.resource.data);
+    }
+  }
+}
