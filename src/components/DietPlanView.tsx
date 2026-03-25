@@ -59,8 +59,8 @@ export default function DietPlanView({ profile }: Props) {
         createdAt: new Date().toISOString(),
       };
 
-      await addDoc(collection(db, 'dietPlans'), newPlan);
-      setCurrentPlan(newPlan);
+      const docRef = await addDoc(collection(db, 'dietPlans'), newPlan);
+      setCurrentPlan({ ...newPlan, id: docRef.id });
       toast.success('New 7-day diet plan generated!');
     } catch (error: any) {
       toast.error('Failed to generate plan: ' + error.message);
@@ -108,6 +108,24 @@ export default function DietPlanView({ profile }: Props) {
 
   const dayPlan = currentPlan.plan[selectedDay];
 
+  if (!dayPlan) {
+    return (
+      <div className="space-y-8">
+        <div className="bg-amber-50 border border-amber-200 p-6 rounded-2xl text-amber-800">
+          <p className="font-bold mb-2">Plan Data Missing for {selectedDay}</p>
+          <p className="text-sm">There was an issue retrieving the plan for this day. Please try regenerating the plan.</p>
+          <button
+            onClick={handleGenerate}
+            disabled={generating}
+            className="mt-4 bg-amber-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-amber-700 transition-all"
+          >
+            {generating ? 'Generating...' : 'Regenerate Plan'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-stone-100">
@@ -143,6 +161,7 @@ export default function DietPlanView({ profile }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {['breakfast', 'lunch', 'dinner', 'snacks'].map((mealType) => {
           const meal = dayPlan[mealType as keyof DayPlan] as Meal;
+          if (!meal) return null;
           return (
             <motion.div
               key={mealType}
